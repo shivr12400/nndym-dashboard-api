@@ -29,15 +29,18 @@ def lambda_handler(event, context):
         elif http_method == 'POST' and path == leader_info:
             return post_leader_info(json.loads(event['body'])) 
         elif http_method == 'GET' and path == satsang_count:
-            return get_satsang_count()
+            mandir_name = event['queryStringParameters']['mandirName']
+            return get_satsang_count(mandir_name)
         elif http_method == 'POST' and path == satsang_count:
             return post_satsang_count(json.loads(event['body']))
         elif http_method == 'GET' and path == upcoming_events:
-            return get_upcoming_events()
+            mandir_name = event['queryStringParameters']['mandirName']
+            return get_upcoming_events(mandir_name)
         elif http_method == 'POST' and path == upcoming_events:
             return post_upcoming_events(json.loads(event['body']))
         elif http_method == 'GET' and path == kids:
-            return get_kids()
+            mandir_name = event['queryStringParameters']['mandirName']
+            return get_kids(mandir_name)
         elif http_method == 'POST' and path == kids:
             return post_kid(json.loads(event['body']))
         else:
@@ -68,10 +71,15 @@ def post_leader_info(request_body):
         print('Error:', e)
         return build_response(400, e.response['Error']['Message'])
 
-def get_satsang_count():
+def get_satsang_count(mandir_name):
     try:
         scan_params = {
-            'TableName': satsang_count_table.name
+            'TableName': satsang_count_table.name,
+            "FilterExpression" : "contains(#mandirName, :mandirName)",
+            "ExpressionAttributeNames": { "#mandirName": "mandirName" },
+            "ExpressionAttributeValues": {
+                ':mandirName': mandir_name
+            }
         }
         return build_response(200, scan_dynamo_records_satsang_counts(scan_params, []))
     except ClientError as e:
@@ -101,10 +109,15 @@ def post_satsang_count(request_body):
         print('Error:', e)
         return build_response(400, e.response['Error']['Message'])
     
-def get_upcoming_events():
+def get_upcoming_events(mandir_name):
     try:
         scan_params = {
-            'TableName': upcoming_events_table.name
+            'TableName': upcoming_events_table.name,
+            "FilterExpression" : "contains(#mandirName, :mandirName)",
+            "ExpressionAttributeNames": { "#mandirName": "mandirName" },
+            "ExpressionAttributeValues": {
+                ':mandirName': mandir_name
+            }
         }
         return build_response(200, scan_dynamo_records_events(scan_params, []))
     except ClientError as e:
@@ -125,10 +138,15 @@ def post_upcoming_events(request_body):
         print('Error:', e)
         return build_response(400, e.response['Error']['Message'])
         
-def get_kids():
+def get_kids(mandir_name):
     try:
         scan_params = {
-            'TableName': kids_table.name
+            'TableName': kids_table.name,
+            "FilterExpression" : "contains(#mandir, :mandir)",
+            "ExpressionAttributeNames": { "#mandir": "mandir" },
+            "ExpressionAttributeValues": {
+                ':mandir': mandir_name
+            }
         }
         return build_response(200, scan_dynamo_records(scan_params, []))
     except ClientError as e:
